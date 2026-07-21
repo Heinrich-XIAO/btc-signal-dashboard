@@ -35,6 +35,6 @@ jobs:
 
       - name: Deploy to VPS
         run: |
-          ssh root@134.209.204.63 "cd /opt/btc-signal-dashboard && git pull && systemctl restart btc-dashboard"
+          ssh root@134.209.204.63 "cd /opt/btc-signal-dashboard && git reset --hard && git clean -fd && git pull && systemctl restart btc-dashboard"
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" dashboard/dist/ root@134.209.204.63:/opt/btc-signal-dashboard/dashboard/dist/
           ssh root@134.209.204.63 "systemctl restart btc-dashboard"

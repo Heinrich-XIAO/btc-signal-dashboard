@@ -67,8 +67,10 @@ Thumbs.db
 graphs/*.png
 *.png
 
-# History
+# History / Stats
 api/history.json
+api/stats.json
+api/resolved.json
 
 # CatBoost
 catboost_info/
