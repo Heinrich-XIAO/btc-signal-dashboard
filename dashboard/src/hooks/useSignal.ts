@@ -3,7 +3,7 @@ import type { PredictionData, HistoryEntry } from '../types';
 
 const WS_URL = import.meta.env.DEV
   ? `ws://${window.location.hostname}:8000/ws`
-  : `wss://${window.location.host}/ws`;
+  : `ws://${window.location.host}/ws`;
 
 const API_URL = import.meta.env.DEV
   ? 'http://localhost:8000/api'
