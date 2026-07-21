@@ -3,6 +3,19 @@ export interface ModelVote {
   signal: 'UP' | 'DOWN' | 'HOLD';
 }
 
+export interface LiveStats {
+  total_predictions: number;
+  total_candles: number;
+  correct: number;
+  accuracy: number;
+  coverage: number;
+  true_positives: number;
+  false_positives: number;
+  true_negatives: number;
+  false_negatives: number;
+  holds: number;
+}
+
 export interface PredictionData {
   signal: 'UP' | 'DOWN' | 'HOLD';
   confidence: number;
@@ -16,13 +29,16 @@ export interface PredictionData {
   timestamp?: string;
   countdown?: number;
   price?: number;
+  live_stats?: LiveStats;
 }
 
 export interface HistoryEntry {
   timestamp: string;
-  price: number;
-  signal: 'UP' | 'DOWN';
-  confidence: number;
-  ensemble_proba: number;
-  result?: 'win' | 'loss';
+  price?: number;
+  signal?: 'UP' | 'DOWN';
+  confidence?: number;
+  ensemble_proba?: number;
+  predicted_signal?: 'UP' | 'DOWN';
+  actual?: 'UP' | 'DOWN';
+  result?: 'TP' | 'FP' | 'TN' | 'FN';
 }
