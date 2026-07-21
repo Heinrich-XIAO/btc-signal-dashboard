@@ -74,12 +74,19 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-text-dim">Live Accuracy</span>
-                  <span className={`font-mono font-semibold ${stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
-                    {stats.accuracy.toFixed(1)}%
-                  </span>
+                  {stats.total_predictions >= 10 ? (
+                    <span className={`font-mono font-semibold ${stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
+                      {stats.accuracy.toFixed(1)}%
+                    </span>
+                  ) : (
+                    <span className="font-mono text-text-dim text-xs">Need {10 - stats.total_predictions} more</span>
+                  )}
                 </div>
                 <div className="flex justify-between text-xs text-text-dim">
                   <span>{stats.correct}/{stats.total_predictions} correct</span>
+                  {stats.total_predictions < 10 && (
+                    <span className="text-down/70">Unreliable until 10+</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-dim">Coverage</span>
