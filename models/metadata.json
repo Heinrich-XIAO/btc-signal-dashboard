@@ -1,0 +1,181 @@
+{
+  "all_features": [
+    "15m_returns",
+    "15m_body_pct",
+    "15m_rsi",
+    "price_vs_15m_ema5",
+    "1h_returns",
+    "1h_body_pct",
+    "1h_rsi",
+    "price_vs_1h_ema10",
+    "mom_1h",
+    "4h_returns",
+    "4h_body_pct",
+    "4h_rsi",
+    "price_vs_4h_ema20",
+    "mom_4h",
+    "mom_15m",
+    "trend_15m_up",
+    "trend_1h_up",
+    "trend_4h_up",
+    "trend_confluence_up",
+    "trend_confluence_down",
+    "rsi_5m_vs_15m",
+    "rsi_5m_vs_1h",
+    "1m_returns_1m_sum",
+    "1m_returns_1m_std",
+    "1m_returns_1m_min",
+    "1m_returns_1m_max",
+    "1m_taker_ratio",
+    "1m_range_sum",
+    "1m_max_range",
+    "funding_rate",
+    "funding_rate_abs",
+    "funding_rate_trend"
+  ],
+  "combined_features": [
+    "1h_returns",
+    "price_vs_1h_ema10",
+    "funding_rate_abs",
+    "bb_20_position",
+    "williams_r_14",
+    "cci_14",
+    "15m_rsi",
+    "15m_body_pct",
+    "price_vs_15m_ema5",
+    "mom_1h",
+    "volume_ratio",
+    "1m_max_range",
+    "1h_rsi",
+    "price_vs_4h_ema20",
+    "funding_rate_trend",
+    "4h_returns",
+    "1m_returns_1m_std",
+    "adx_14",
+    "1m_returns_1m_min",
+    "macd_hist",
+    "mom_4h",
+    "trend_4h_up",
+    "stoch_k_14",
+    "15m_returns",
+    "taker_buy_ratio",
+    "4h_body_pct",
+    "returns_lag1",
+    "1m_returns_1m_max",
+    "trend_confluence_down",
+    "funding_rate",
+    "rsi_5m_vs_15m",
+    "rsi_5m_vs_1h",
+    "trend_confluence_up",
+    "close_ma20_dist",
+    "mom_15m",
+    "1m_returns_1m_sum",
+    "1m_range_sum",
+    "rsi_14",
+    "1m_taker_ratio",
+    "volatility_10",
+    "4h_rsi",
+    "trend_1h_up",
+    "cumret_5",
+    "atr_14_ratio",
+    "1h_body_pct",
+    "trend_15m_up"
+  ],
+  "original_features": [
+    "rsi_14",
+    "stoch_k_14",
+    "bb_20_position",
+    "macd_hist",
+    "close_ma20_dist",
+    "volume_ratio",
+    "taker_buy_ratio",
+    "returns_lag1",
+    "cumret_5",
+    "williams_r_14",
+    "cci_14",
+    "atr_14_ratio",
+    "volatility_10",
+    "adx_14"
+  ],
+  "feature_count": 46,
+  "model_results": {
+    "lr_all": {
+      "accuracy": 0.8901850362027354,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.8327494693796575,
+      "down_threshold": 0.14839176224527217
+    },
+    "lr_comb": {
+      "accuracy": 0.9316170555108608,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.8771671666937895,
+      "down_threshold": 0.10999433260057785
+    },
+    "xgb": {
+      "accuracy": 0.913113435237329,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.8449010181427001,
+      "down_threshold": 0.12871573150157925
+    },
+    "lgb": {
+      "accuracy": 0.912308930008045,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.8474806937645084,
+      "down_threshold": 0.1338939960607105
+    },
+    "cat": {
+      "accuracy": 0.910297666934835,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.8405953514826681,
+      "down_threshold": 0.13319991440071619
+    },
+    "rf": {
+      "accuracy": 0.8901850362027354,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.7168676145231868,
+      "down_threshold": 0.26999216421164823
+    },
+    "hgb": {
+      "accuracy": 0.9086886564762671,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.812867928994796,
+      "down_threshold": 0.17938093488392792
+    },
+    "ensemble": {
+      "accuracy": 0.9328238133547868,
+      "coverage": 0.24010044427274482,
+      "n_trades": 2486,
+      "up_threshold": 0.8424236022743982,
+      "down_threshold": 0.1417998856322893,
+      "models": [
+        "lr_comb",
+        "xgb",
+        "lgb"
+      ]
+    }
+  },
+  "ensemble_config": {
+    "models": [
+      "lr_comb",
+      "xgb",
+      "lgb"
+    ],
+    "weights": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "up_threshold": 0.8424236022743982,
+    "down_threshold": 0.1417998856322893
+  },
+  "training_rows": 34513,
+  "train_split": 24159,
+  "test_split": 10354
+}

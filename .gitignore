@@ -6,6 +6,18 @@
 *.cbm
 models/*.json
 models/*.txt
+
+# But keep saved ML models for deployment
+!models/metadata.json
+!models/lr_all.joblib
+!models/lr_comb.joblib
+!models/scaler_all.joblib
+!models/scaler_comb.joblib
+!models/xgb.json
+!models/lgb.txt
+!models/cat.cbm
+!models/rf.joblib
+!models/hgb.joblib
 btc_5m_data.csv
 btc_15m_data.csv
 btc_1h_data.csv
