@@ -99,36 +99,30 @@ def _compute_next_candle_countdown() -> int:
 
 
 def _resolve_pending_signals(df_5m: Any):
-    """Check if any pending predictions can now be resolved."""
+    """Check if any pending predictions can now be resolved.
+
+    A prediction made during candle T (keyed by T's open time) says whether
+    candle T+1 will close higher than candle T. We can only verify this after
+    candle T+1 has fully closed, which means T+2 is the current forming candle.
+    At that point:
+        iloc[-1] = T+2 (forming)
+        iloc[-2] = T+1 (just completed)
+        iloc[-3] = T (completed)
+    We compare close[T+1] > close[T] and look for the pending signal keyed by T.
+    """
     global live_stats, resolved_signals, pending_signals
 
-    if df_5m is None or len(df_5m) < 2:
+    if df_5m is None or len(df_5m) < 3:
+        # Need at least 3 candles: T (predicted), T+1 (to verify), T+2 (current)
         return
 
-    # The latest candle just closed or is still forming
-    # We need at least 2 candles to compare
-    latest_candle_time = int(df_5m.index[-1].timestamp() * 1000)  # open time in ms
-    latest_close = float(df_5m["close"].iloc[-1])
-    prev_close = float(df_5m["close"].iloc[-2])
-    actual_up = latest_close > prev_close
+    # T+2 is forming, T+1 just completed, T is the one we predicted during
+    key_to_resolve = int(df_5m.index[-3].timestamp() * 1000)
+    close_t_plus_1 = float(df_5m["close"].iloc[-2])
+    close_t = float(df_5m["close"].iloc[-3])
+    actual_up = close_t_plus_1 > close_t
 
-    # Check if we have any pending prediction for the candle that just preceded this one
-    # The prediction was made for the transition from candle[-2] to candle[-1]
-    # We use the open time of candle[-2] as the key
-    prev_candle_time = int(df_5m.index[-2].timestamp() * 1000)
-
-    # Find and resolve matching pending signal
-    signal_to_resolve = None
-    for key in list(pending_signals.keys()):
-        # Resolve any signal that was for a candle before the latest one
-        if key <= prev_candle_time:
-            signal_to_resolve = pending_signals.pop(key)
-            break
-
-    if signal_to_resolve is None:
-        # Also check if there's a signal for the exact prev candle
-        if prev_candle_time in pending_signals:
-            signal_to_resolve = pending_signals.pop(prev_candle_time)
+    signal_to_resolve = pending_signals.pop(key_to_resolve, None)
 
     if signal_to_resolve:
         predicted_signal = signal_to_resolve.get("signal", "HOLD")
@@ -177,7 +171,7 @@ def _resolve_pending_signals(df_5m: Any):
             "actual": "UP" if actual_up else "DOWN",
             "result": result,
             "price_at_prediction": signal_to_resolve.get("price"),
-            "price_now": latest_close,
+            "price_now": close_t_plus_1,
             "confidence": signal_to_resolve.get("confidence"),
         }
         resolved_signals.append(resolved)
