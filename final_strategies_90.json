@@ -1,0 +1,86 @@
+{
+  "lr_all": {
+    "accuracy": 0.8912678421494542,
+    "n_trades": 2382,
+    "coverage": 0.23005601699826153,
+    "n_up": 1553,
+    "n_down": 829,
+    "up_q": 85,
+    "down_q": 8
+  },
+  "lr_comb": {
+    "accuracy": 0.9316170555108608,
+    "n_trades": 2486,
+    "coverage": 0.24010044427274482,
+    "n_up": 1243,
+    "n_down": 1243,
+    "up_q": 88,
+    "down_q": 12
+  },
+  "xgb": {
+    "accuracy": 0.913113435237329,
+    "n_trades": 2486,
+    "coverage": 0.24010044427274482,
+    "n_up": 1243,
+    "n_down": 1243,
+    "up_q": 88,
+    "down_q": 12
+  },
+  "lgb": {
+    "accuracy": 0.912308930008045,
+    "n_trades": 2486,
+    "coverage": 0.24010044427274482,
+    "n_up": 1243,
+    "n_down": 1243,
+    "up_q": 88,
+    "down_q": 12
+  },
+  "cat": {
+    "accuracy": 0.911102172164119,
+    "n_trades": 2486,
+    "coverage": 0.24010044427274482,
+    "n_up": 1243,
+    "n_down": 1243,
+    "up_q": 88,
+    "down_q": 12
+  },
+  "hgb": {
+    "accuracy": 0.910297666934835,
+    "n_trades": 2486,
+    "coverage": 0.24010044427274482,
+    "n_up": 1243,
+    "n_down": 1243,
+    "up_q": 88,
+    "down_q": 12
+  },
+  "rf": {
+    "accuracy": 0.8873692679002414,
+    "n_trades": 2486,
+    "coverage": 0.24010044427274482,
+    "n_up": 1243,
+    "n_down": 1243,
+    "up_q": 88,
+    "down_q": 12
+  },
+  "strong_15m": {
+    "accuracy": 0.6722222222222223,
+    "coverage": 0.34769171334749854,
+    "n_trades": 3600,
+    "type": "rule"
+  },
+  "tf_confluence": {
+    "accuracy": 0.5426317556226922,
+    "coverage": 0.5754297855901102,
+    "n_trades": 5958,
+    "type": "rule"
+  },
+  "ensemble": {
+    "accuracy": 0.9328238133547868,
+    "n_trades": 2486,
+    "coverage": 0.24010044427274482,
+    "n_up": 1243,
+    "n_down": 1243,
+    "up_q": 88,
+    "down_q": 12
+  }
+}

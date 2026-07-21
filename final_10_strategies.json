@@ -1,0 +1,104 @@
+[
+  {
+    "name": "rsi_momentum",
+    "params": {
+      "oversold": 35,
+      "overbought": 65
+    },
+    "accuracy": 0.47109018684713844,
+    "n_trades": 13594,
+    "n_up": "6751",
+    "n_down": "6843",
+    "direction": -1
+  },
+  {
+    "name": "bb_mean_reversion",
+    "params": {
+      "low": 0.2,
+      "high": 0.8
+    },
+    "accuracy": 0.5215211032177184,
+    "n_trades": 14358,
+    "n_up": "7405",
+    "n_down": "6953",
+    "direction": 1
+  },
+  {
+    "name": "stoch_momentum",
+    "params": {
+      "low": 20,
+      "high": 80
+    },
+    "accuracy": 0.4729901269393512,
+    "n_trades": 14180,
+    "n_up": "7105",
+    "n_down": "7075",
+    "direction": 1
+  },
+  {
+    "name": "volume_direction",
+    "params": {
+      "vol_threshold": 0.8
+    },
+    "accuracy": 0.4838982096610742,
+    "n_trades": 17762,
+    "n_up": "8791",
+    "n_down": "8971",
+    "direction": -1
+  },
+  {
+    "name": "macd_momentum",
+    "params": {
+      "threshold": 0
+    },
+    "accuracy": 0.4934540072859745,
+    "n_trades": 35136,
+    "n_up": "17505",
+    "n_down": "17631",
+    "direction": -1
+  },
+  {
+    "name": "williams_r",
+    "params": {
+      "level": 70
+    },
+    "accuracy": 0.5216827279466272,
+    "n_trades": 21584,
+    "n_up": "10789",
+    "n_down": "10795",
+    "direction": -1
+  },
+  {
+    "name": "cci",
+    "params": {
+      "level": 80
+    },
+    "accuracy": 0.5193492233529727,
+    "n_trades": 14936,
+    "n_up": "7674",
+    "n_down": "7262",
+    "direction": 1
+  },
+  {
+    "name": "prev_continuation",
+    "params": {
+      "threshold": 0.0
+    },
+    "accuracy": 0.4964389493476155,
+    "n_trades": 35102,
+    "n_up": "17504",
+    "n_down": "17598",
+    "direction": -1
+  },
+  {
+    "name": "cumret_momentum",
+    "params": {
+      "threshold": 0.0
+    },
+    "accuracy": 0.48662188318342253,
+    "n_trades": 35132,
+    "n_up": "17501",
+    "n_down": "17631",
+    "direction": -1
+  }
+]

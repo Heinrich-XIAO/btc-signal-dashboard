@@ -1,0 +1,12 @@
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]: Disconnected
+    - heading "BTC/USDT" [level=1] [ref=e9]
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - heading "Model Votes" [level=3] [ref=e17]
+      - heading "Stats" [level=3] [ref=e28]
+    - heading "Vote Distribution" [level=3] [ref=e42]
+    - generic [ref=e45]:
+      - heading "Recent Signals" [level=3] [ref=e46]
+      - generic [ref=e47]: No signals yet. Waiting for strong predictions...

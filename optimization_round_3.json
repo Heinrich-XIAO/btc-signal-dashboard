@@ -1,0 +1,663 @@
+{
+  "ma_reversal_ft": [
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.10165105466270838,
+        "overbought_dist": 0.019955246078445645,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.046817266316141394,
+        "overbought_dist": 0.021715853676690326,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.04131343474152476,
+        "overbought_dist": 0.019861652138519533,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.060277785870335956,
+        "overbought_dist": 0.01924876509276504,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.06728771383735895,
+        "overbought_dist": 0.020084193276037894,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.1003034211124673,
+        "overbought_dist": 0.020025017557130643,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.09475110117539254,
+        "overbought_dist": 0.020500419632143548,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.04136742782810541,
+        "overbought_dist": 0.020970380562166113,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.04194232149140387,
+        "overbought_dist": 0.02095138639386876,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "ma_period": 10,
+        "dist_threshold": -0.10814315141239936,
+        "overbought_dist": 0.019444152896141195,
+        "require_reversal": false
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    }
+  ],
+  "extreme_oversold_bounce_ft": [
+    {
+      "params": {
+        "rsi_max": 22,
+        "stoch_max": 15,
+        "bb_pos_max": 0.12857870968324986,
+        "wick_min": 0.3491760148322227,
+        "volume_min": 3.1991700740866795,
+        "prev_drop_threshold": 0.002757564371663751,
+        "n_prev_candles": 3
+      },
+      "accuracy": 1.0,
+      "n_trades": 7,
+      "n_up": "4",
+      "n_down": "3"
+    },
+    {
+      "params": {
+        "rsi_max": 30,
+        "stoch_max": 15,
+        "bb_pos_max": 0.34084959095769507,
+        "wick_min": 0.35410939934041885,
+        "volume_min": 3.705897951473234,
+        "prev_drop_threshold": 0.002343559499842398,
+        "n_prev_candles": 3
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "3",
+      "n_down": "2"
+    },
+    {
+      "params": {
+        "rsi_max": 22,
+        "stoch_max": 15,
+        "bb_pos_max": 0.12625467598314852,
+        "wick_min": 0.4089464494112536,
+        "volume_min": 2.927457568008329,
+        "prev_drop_threshold": 0.0028816082338917345,
+        "n_prev_candles": 3
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "2",
+      "n_down": "3"
+    },
+    {
+      "params": {
+        "rsi_max": 26,
+        "stoch_max": 15,
+        "bb_pos_max": 0.208892424880397,
+        "wick_min": 0.3967042456323347,
+        "volume_min": 2.909703298168724,
+        "prev_drop_threshold": 0.004575695910604389,
+        "n_prev_candles": 3
+      },
+      "accuracy": 1.0,
+      "n_trades": 6,
+      "n_up": "4",
+      "n_down": "2"
+    },
+    {
+      "params": {
+        "rsi_max": 25,
+        "stoch_max": 16,
+        "bb_pos_max": 0.30540295508400916,
+        "wick_min": 0.3411899359082638,
+        "volume_min": 3.4218402009275533,
+        "prev_drop_threshold": 0.005289207983046476,
+        "n_prev_candles": 3
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "1",
+      "n_down": "4"
+    },
+    {
+      "params": {
+        "rsi_max": 34,
+        "stoch_max": 10,
+        "bb_pos_max": 0.2609836508320587,
+        "wick_min": 0.25817563981429276,
+        "volume_min": 2.7978491616506735,
+        "prev_drop_threshold": 0.004316959398960899,
+        "n_prev_candles": 3
+      },
+      "accuracy": 0.9,
+      "n_trades": 10,
+      "n_up": "5",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_max": 30,
+        "stoch_max": 19,
+        "bb_pos_max": 0.20785043697329844,
+        "wick_min": 0.2790407866301098,
+        "volume_min": 3.243639895020107,
+        "prev_drop_threshold": 0.006557923536565111,
+        "n_prev_candles": 3
+      },
+      "accuracy": 0.8888888888888888,
+      "n_trades": 9,
+      "n_up": "3",
+      "n_down": "6"
+    },
+    {
+      "params": {
+        "rsi_max": 28,
+        "stoch_max": 16,
+        "bb_pos_max": 0.0956117252607414,
+        "wick_min": 0.3520544897282711,
+        "volume_min": 3.145743762691699,
+        "prev_drop_threshold": 0.003861537921563484,
+        "n_prev_candles": 3
+      },
+      "accuracy": 0.875,
+      "n_trades": 8,
+      "n_up": "6",
+      "n_down": "2"
+    },
+    {
+      "params": {
+        "rsi_max": 26,
+        "stoch_max": 10,
+        "bb_pos_max": 0.2572820038567735,
+        "wick_min": 0.23343556016604752,
+        "volume_min": 2.655013871732432,
+        "prev_drop_threshold": 0.004349577257025389,
+        "n_prev_candles": 3
+      },
+      "accuracy": 0.875,
+      "n_trades": 8,
+      "n_up": "4",
+      "n_down": "4"
+    },
+    {
+      "params": {
+        "rsi_max": 24,
+        "stoch_max": 10,
+        "bb_pos_max": 0.10416121119593824,
+        "wick_min": 0.23756534992836478,
+        "volume_min": 2.98738845066181,
+        "prev_drop_threshold": 0.00543262118529237,
+        "n_prev_candles": 3
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "3",
+      "n_down": "4"
+    }
+  ],
+  "mean_reversion_spike_ft": [
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.004834974220573343,
+        "reversal_threshold": 0.003532081007290811,
+        "require_wick": true,
+        "wick_min": 0.2542290752779806
+      },
+      "accuracy": 1.0,
+      "n_trades": 6,
+      "n_up": "1",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.004628453033198518,
+        "reversal_threshold": 0.003540930387549886,
+        "require_wick": true,
+        "wick_min": 0.28426212554257785
+      },
+      "accuracy": 1.0,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.003903283809458277,
+        "reversal_threshold": 0.003055730490155975,
+        "require_wick": true,
+        "wick_min": 0.26772000268906665
+      },
+      "accuracy": 0.875,
+      "n_trades": 8,
+      "n_up": "3",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.005499916699449191,
+        "reversal_threshold": 0.0030339277475021843,
+        "require_wick": true,
+        "wick_min": 0.2622997867376127
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "2",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.004626618971185897,
+        "reversal_threshold": 0.0032955263586677023,
+        "require_wick": true,
+        "wick_min": 0.2973363579101424
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "2",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.003687205521653553,
+        "reversal_threshold": 0.002580490217189021,
+        "require_wick": true,
+        "wick_min": 0.410839263054133
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "4",
+      "n_down": "3"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.004713043824126297,
+        "reversal_threshold": 0.0031239969145504206,
+        "require_wick": true,
+        "wick_min": 0.27808479460948327
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "2",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.005181476580436132,
+        "reversal_threshold": 0.0031707935524244012,
+        "require_wick": true,
+        "wick_min": 0.28416757900744355
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "2",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.004970357787938236,
+        "reversal_threshold": 0.0035287233241769566,
+        "require_wick": true,
+        "wick_min": 0.23083557595918375
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "2",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "spike_period": 1,
+        "spike_threshold": 0.004910043142695339,
+        "reversal_threshold": 0.0023402285469298766,
+        "require_wick": true,
+        "wick_min": 0.38911807755934685
+      },
+      "accuracy": 0.8571428571428571,
+      "n_trades": 7,
+      "n_up": "3",
+      "n_down": "4"
+    }
+  ],
+  "rsi_reversal_ft": [
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 6,
+        "overbought": 89,
+        "volume_min": 4.712232796608247
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 4,
+        "overbought": 89,
+        "volume_min": 4.765647608154562
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 6,
+        "overbought": 89,
+        "volume_min": 4.934323959188217
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 4,
+        "overbought": 89,
+        "volume_min": 4.977068108632646
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 6,
+        "overbought": 89,
+        "volume_min": 4.993953429119787
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 5,
+        "overbought": 90,
+        "volume_min": 4.557008525559123
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 5,
+        "overbought": 90,
+        "volume_min": 5.163147037875994
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 5,
+        "overbought": 89,
+        "volume_min": 4.997491009660467
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 4,
+        "overbought": 89,
+        "volume_min": 4.487157987982937
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    },
+    {
+      "params": {
+        "rsi_period": 14,
+        "oversold": 4,
+        "overbought": 90,
+        "volume_min": 4.056068456755766
+      },
+      "accuracy": 0.8,
+      "n_trades": 5,
+      "n_up": "0",
+      "n_down": "5"
+    }
+  ],
+  "confluence_ft": [
+    {
+      "params": {
+        "rsi_max": 10,
+        "stoch_max": 10,
+        "bb_pos_max": 0.07197850988481694,
+        "volume_min": 2.5253924661194787,
+        "require_all": true
+      },
+      "accuracy": 0.8181818181818182,
+      "n_trades": 22,
+      "n_up": "14",
+      "n_down": "8"
+    },
+    {
+      "params": {
+        "rsi_max": 9,
+        "stoch_max": 9,
+        "bb_pos_max": 0.07139855986814242,
+        "volume_min": 2.3196044510750027,
+        "require_all": true
+      },
+      "accuracy": 0.8125,
+      "n_trades": 16,
+      "n_up": "9",
+      "n_down": "7"
+    },
+    {
+      "params": {
+        "rsi_max": 10,
+        "stoch_max": 9,
+        "bb_pos_max": 0.052953618086261346,
+        "volume_min": 2.4630937652134044,
+        "require_all": true
+      },
+      "accuracy": 0.8095238095238095,
+      "n_trades": 21,
+      "n_up": "13",
+      "n_down": "8"
+    },
+    {
+      "params": {
+        "rsi_max": 10,
+        "stoch_max": 10,
+        "bb_pos_max": 0.05614471452519769,
+        "volume_min": 2.555145215609204,
+        "require_all": true
+      },
+      "accuracy": 0.8095238095238095,
+      "n_trades": 21,
+      "n_up": "13",
+      "n_down": "8"
+    },
+    {
+      "params": {
+        "rsi_max": 10,
+        "stoch_max": 9,
+        "bb_pos_max": 0.023970374538035893,
+        "volume_min": 2.4029155105021536,
+        "require_all": true
+      },
+      "accuracy": 0.8095238095238095,
+      "n_trades": 21,
+      "n_up": "13",
+      "n_down": "8"
+    },
+    {
+      "params": {
+        "rsi_max": 10,
+        "stoch_max": 7,
+        "bb_pos_max": 0.04504168796996499,
+        "volume_min": 2.3527273352997766,
+        "require_all": true
+      },
+      "accuracy": 0.8,
+      "n_trades": 20,
+      "n_up": "12",
+      "n_down": "8"
+    },
+    {
+      "params": {
+        "rsi_max": 9,
+        "stoch_max": 9,
+        "bb_pos_max": 0.03993306640078534,
+        "volume_min": 2.47149508850404,
+        "require_all": true
+      },
+      "accuracy": 0.8,
+      "n_trades": 15,
+      "n_up": "9",
+      "n_down": "6"
+    },
+    {
+      "params": {
+        "rsi_max": 9,
+        "stoch_max": 9,
+        "bb_pos_max": 0.08372213193508353,
+        "volume_min": 2.351423274658173,
+        "require_all": true
+      },
+      "accuracy": 0.8,
+      "n_trades": 15,
+      "n_up": "9",
+      "n_down": "6"
+    },
+    {
+      "params": {
+        "rsi_max": 10,
+        "stoch_max": 8,
+        "bb_pos_max": 0.07571906924236022,
+        "volume_min": 2.4857543346613213,
+        "require_all": true
+      },
+      "accuracy": 0.8,
+      "n_trades": 20,
+      "n_up": "12",
+      "n_down": "8"
+    },
+    {
+      "params": {
+        "rsi_max": 9,
+        "stoch_max": 10,
+        "bb_pos_max": 0.07818984933776364,
+        "volume_min": 2.4961800445727658,
+        "require_all": true
+      },
+      "accuracy": 0.8,
+      "n_trades": 15,
+      "n_up": "9",
+      "n_down": "6"
+    }
+  ],
+  "ensembles": []
+}

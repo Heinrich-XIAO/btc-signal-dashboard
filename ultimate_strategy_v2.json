@@ -1,0 +1,14 @@
+{
+  "accuracy": 0.9328238133547868,
+  "coverage": 0.24010044427274482,
+  "n_trades": 2486,
+  "n_up": 1243,
+  "n_down": 1243,
+  "up_threshold": 0.8424236022743479,
+  "down_threshold": 0.14179988563229112,
+  "models": [
+    "lr_comb",
+    "xgb",
+    "lgb"
+  ]
+}

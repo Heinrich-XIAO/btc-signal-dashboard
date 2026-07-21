@@ -1,0 +1,62 @@
+# Data & Models
+*.csv
+*.npy
+*.pkl
+*.joblib
+*.cbm
+models/*.json
+models/*.txt
+btc_5m_data.csv
+btc_15m_data.csv
+btc_1h_data.csv
+btc_4h_data.csv
+btc_1m_data.csv
+btc_funding_rates.csv
+btc_open_interest.csv
+btc_5m_features.csv
+btc_5m_enhanced.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+
+# Node / Frontend
+dashboard/node_modules/
+dashboard/dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Graphs
+graphs/*.png
+*.png
+
+# History
+api/history.json
+
+# CatBoost
+catboost_info/
