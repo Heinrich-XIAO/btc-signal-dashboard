@@ -33,7 +33,9 @@ export interface PredictionData {
 }
 
 export interface HistoryEntry {
-  timestamp: string;
+  timestamp?: string;
+  predicted_at?: string;
+  resolved_at?: string;
   price?: number;
   signal?: 'UP' | 'DOWN';
   confidence?: number;

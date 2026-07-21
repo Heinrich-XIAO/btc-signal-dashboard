@@ -192,17 +192,19 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                     {[...history].reverse().map((entry, i) => (
                       <tr key={i} className="text-text">
                         <td className="py-2 text-text-dim font-mono text-xs">
-                          {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {entry.resolved_at ? new Date(entry.resolved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
                         </td>
                         <td className="py-2 text-center">
                           <span
                             className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                              entry.signal === 'UP'
+                              entry.predicted_signal === 'UP'
                                 ? 'bg-up/20 text-up'
-                                : 'bg-down/20 text-down'
+                                : entry.predicted_signal === 'DOWN'
+                                ? 'bg-down/20 text-down'
+                                : 'bg-hold/20 text-hold'
                             }`}
                           >
-                            {entry.signal}
+                            {entry.predicted_signal || '--'}
                           </span>
                         </td>
                         <td className="py-2 text-center text-xs">
