@@ -290,6 +290,38 @@ async def get_stats():
     return live_stats
 
 
+@app.post("/api/reset")
+async def reset_stats():
+    """Reset all live stats and history."""
+    global live_stats, resolved_signals, pending_signals
+
+    live_stats.update({
+        "total_predictions": 0,
+        "total_candles": 0,
+        "correct": 0,
+        "accuracy": 0.0,
+        "coverage": 0.0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "true_negatives": 0,
+        "false_negatives": 0,
+        "holds": 0,
+    })
+    resolved_signals.clear()
+    pending_signals.clear()
+
+    # Delete persisted files
+    try:
+        if STATS_FILE.exists():
+            STATS_FILE.unlink()
+        if RESOLVED_FILE.exists():
+            RESOLVED_FILE.unlink()
+    except Exception as e:
+        print(f"Failed to delete stat files: {e}")
+
+    return {"success": True}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()

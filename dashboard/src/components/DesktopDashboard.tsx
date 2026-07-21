@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { SignalPill } from './SignalPill';
 import { CountdownTimer } from './CountdownTimer';
 import { PriceHeader } from './PriceHeader';
+import { ConfirmModal } from './ConfirmModal';
 import type { PredictionData, HistoryEntry } from '../types';
 
 interface DesktopDashboardProps {
@@ -19,8 +21,11 @@ const MODEL_NAMES: Record<string, string> = {
   hgb: 'HistGradient',
 };
 
+const RESET_PHRASE = 'd3sTr0Y_4ll_L1v3_AccUR4cY_D4t4_N0_T4K13S13S';
+
 export function DesktopDashboard({ prediction, history, connected }: DesktopDashboardProps) {
   const stats = prediction?.live_stats;
+  const [showResetModal, setShowResetModal] = useState(false);
 
   return (
     <div className="flex flex-col h-screen bg-bg overflow-hidden">
@@ -105,6 +110,18 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                       <div className="text-text-dim">True Negatives</div>
                     </div>
                   </div>
+                </div>
+
+                <div className="border-t border-border pt-3 mt-3">
+                  <button
+                    onClick={() => setShowResetModal(true)}
+                    className="w-full py-2 rounded-lg border border-down/40 bg-down/10 text-down text-xs font-semibold hover:bg-down/20 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    </svg>
+                    Reset Live Stats
+                  </button>
                 </div>
               </div>
             ) : (
@@ -238,6 +255,21 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={() => {
+          setShowResetModal(false);
+          fetch('/api/reset', { method: 'POST' })
+            .then(() => window.location.reload())
+            .catch(console.error);
+        }}
+        title="Reset Live Stats"
+        description="This will permanently delete all live accuracy data, confusion matrix counts, and resolved prediction history. This action cannot be undone."
+        confirmPhrase={RESET_PHRASE}
+        actionLabel="Nuke Stats"
+      />
     </div>
   );
 }
