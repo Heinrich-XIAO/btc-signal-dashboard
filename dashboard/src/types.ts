@@ -14,6 +14,9 @@ export interface LiveStats {
   true_negatives: number;
   false_negatives: number;
   holds: number;
+  equity: number;
+  peak: number;
+  max_drawdown: number;
 }
 
 export interface PredictionData {
@@ -43,4 +46,6 @@ export interface HistoryEntry {
   predicted_signal?: 'UP' | 'DOWN';
   actual?: 'UP' | 'DOWN';
   result?: 'TP' | 'FP' | 'TN' | 'FN';
+  equity?: number;
+  drawdown?: number;
 }

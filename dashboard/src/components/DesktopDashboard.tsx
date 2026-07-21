@@ -89,6 +89,12 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                   <span className="text-text-dim">Signals / Holds</span>
                   <span className="text-text font-mono">{stats.total_predictions} / {stats.holds}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-text-dim">Max Drawdown</span>
+                  <span className={`font-mono font-semibold ${stats.max_drawdown < 0 ? 'text-down' : 'text-up'}`}>
+                    {stats.max_drawdown}
+                  </span>
+                </div>
 
                 <div className="border-t border-border pt-2 mt-2">
                   <p className="text-xs text-text-dim uppercase tracking-wider mb-2">Confusion Matrix</p>
@@ -203,6 +209,7 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                       <th className="text-center pb-2">Pred</th>
                       <th className="text-center pb-2">Actual</th>
                       <th className="text-center pb-2">Result</th>
+                      <th className="text-right pb-2">Eq</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -241,6 +248,9 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                           >
                             {entry.result === 'TP' || entry.result === 'TN' ? '✓' : entry.result === 'FP' || entry.result === 'FN' ? '✗' : '-'}
                           </span>
+                        </td>
+                        <td className="py-2 text-right font-mono text-xs text-text-dim">
+                          {entry.equity !== undefined ? entry.equity : '--'}
                         </td>
                       </tr>
                     ))}

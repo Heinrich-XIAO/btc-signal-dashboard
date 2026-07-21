@@ -51,6 +51,9 @@ live_stats = {
     "true_negatives": 0,       # Predicted DOWN, actual DOWN
     "false_negatives": 0,      # Predicted DOWN, actual UP
     "holds": 0,                # Times we held (no signal)
+    "equity": 0,               # Running equity score (+1 for correct, -1 for wrong)
+    "peak": 0,                 # Highest equity reached
+    "max_drawdown": 0.0,      # Max drawdown from peak (negative %)
 }
 
 # Stats persistence
@@ -152,6 +155,19 @@ def _resolve_pending_signals(df_5m: Any):
 
         live_stats["total_candles"] += 1
 
+        # Update equity and max drawdown (only for actual predictions, not holds)
+        pnl = 0
+        if result in ("TP", "TN"):
+            pnl = 1
+        elif result in ("FP", "FN"):
+            pnl = -1
+        live_stats["equity"] += pnl
+        if live_stats["equity"] > live_stats["peak"]:
+            live_stats["peak"] = live_stats["equity"]
+        drawdown = live_stats["equity"] - live_stats["peak"]
+        if drawdown < live_stats["max_drawdown"]:
+            live_stats["max_drawdown"] = drawdown
+
         # Calculate derived stats
         if live_stats["total_predictions"] > 0:
             live_stats["accuracy"] = round(
@@ -173,6 +189,8 @@ def _resolve_pending_signals(df_5m: Any):
             "price_at_prediction": signal_to_resolve.get("price"),
             "price_now": close_t_plus_1,
             "confidence": signal_to_resolve.get("confidence"),
+            "equity": live_stats["equity"],
+            "drawdown": drawdown,
         }
         resolved_signals.append(resolved)
         if len(resolved_signals) > max_resolved:
@@ -182,7 +200,8 @@ def _resolve_pending_signals(df_5m: Any):
         print(
             f"Resolved: predicted {predicted_signal}, actual {'UP' if actual_up else 'DOWN'} -> {result} | "
             f"Accuracy: {live_stats['accuracy']}% ({live_stats['correct']}/{live_stats['total_predictions']}) | "
-            f"Coverage: {live_stats['coverage']}%"
+            f"Coverage: {live_stats['coverage']}% | "
+            f"Equity: {live_stats['equity']} | MaxDD: {live_stats['max_drawdown']}"
         )
 
 
