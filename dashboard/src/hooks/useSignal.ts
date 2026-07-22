@@ -39,6 +39,9 @@ export function useSignal() {
     };
 
     ws.onmessage = (event) => {
+      // Skip pong responses (server sends plain text "pong")
+      if (event.data === 'pong') return;
+      
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === 'prediction' && msg.data) {
