@@ -30,6 +30,9 @@ latest_prediction: Optional[dict] = None
 latest_price: Optional[dict] = None
 clients: List[WebSocket] = []
 
+# Track which candle we last predicted for
+last_predicted_candle_time: Optional[int] = None
+
 # Live stats tracking
 # pending_signals: keyed by the candle open_time (ms) we predicted for
 # Value is the prediction dict with signal, timestamp, price
@@ -207,7 +210,7 @@ def _resolve_pending_signals(df_5m: Any):
 
 async def _run_prediction_cycle():
     """Fetch data, compute features, run predictions, resolve past signals, broadcast."""
-    global latest_prediction, latest_price
+    global latest_prediction, latest_price, last_predicted_candle_time
 
     try:
         data = fetch_all_timeframes("BTCUSDT")
@@ -225,13 +228,40 @@ async def _run_prediction_cycle():
         # Resolve any pending predictions from previous candles
         _resolve_pending_signals(df_5m)
 
+        # Only predict if this is a new candle we haven't seen yet
+        current_candle_time = int(df_5m.index[-1].timestamp() * 1000)
+        
+        if current_candle_time == last_predicted_candle_time:
+            # Same candle, just broadcast current state without re-predicting
+            if latest_prediction:
+                latest_prediction["price"] = latest_price["price"]
+                latest_prediction["timestamp"] = datetime.now(timezone.utc).isoformat()
+                latest_prediction["countdown"] = _compute_next_candle_countdown()
+                
+                message = json.dumps({"type": "prediction", "data": latest_prediction})
+                disconnected = []
+                for client in clients:
+                    try:
+                        await client.send_text(message)
+                    except Exception:
+                        disconnected.append(client)
+                
+                for client in disconnected:
+                    if client in clients:
+                        clients.remove(client)
+            return
+
+        # New candle - generate prediction at the start
+        last_predicted_candle_time = current_candle_time
+        print(f"New candle at {df_5m.index[-1]} UTC - generating prediction...")
+
         # Compute features
         df_features = compute_live_features(data)
         if df_features is None or df_features.empty:
             print("Feature computation failed")
             return
 
-        # Run prediction
+        # Run prediction (at candle start - signal is locked for this candle)
         prediction = predictor.predict(df_features)
         prediction["timestamp"] = datetime.now(timezone.utc).isoformat()
         prediction["countdown"] = _compute_next_candle_countdown()
@@ -239,7 +269,6 @@ async def _run_prediction_cycle():
         prediction["live_stats"] = live_stats.copy()
 
         # Store this prediction as pending (keyed by current candle time)
-        current_candle_time = int(df_5m.index[-1].timestamp() * 1000)
         pending_signals[current_candle_time] = {
             "timestamp": prediction["timestamp"],
             "signal": prediction["signal"],

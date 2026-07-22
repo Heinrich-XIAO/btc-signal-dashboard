@@ -65,7 +65,7 @@ def fetch_all_timeframes(symbol="BTCUSDT") -> dict:
     """Fetch all required timeframes for feature computation."""
     return {
         "5m": fetch_klines(symbol, "5m", limit=200),
-        "1m": fetch_klines(symbol, "1m", limit=500),
+        "1m": fetch_klines(symbol, "1m", limit=1500),
         "15m": fetch_klines(symbol, "15m", limit=100),
         "1h": fetch_klines(symbol, "1h", limit=100),
         "4h": fetch_klines(symbol, "4h", limit=50),
