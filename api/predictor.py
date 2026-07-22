@@ -14,15 +14,16 @@ class Predictor:
             self.meta = json.load(f)
 
         self.all_features = self.meta["all_features"]
-        self.combined_features = self.meta["combined_features"]
-        self.original_features = self.meta["original_features"]
         self.ensemble_config = self.meta["ensemble_config"]
 
-        # Load models
+        # Single feature set (all features)
+        self.features = self.meta["all_features"]
+
+        # Load scaler
+        self.scaler = joblib.load(MODELS_DIR / "scaler_all.joblib")
+
+        # Load all 7 models
         self.lr_all = joblib.load(MODELS_DIR / "lr_all.joblib")
-        self.lr_comb = joblib.load(MODELS_DIR / "lr_comb.joblib")
-        self.scaler_all = joblib.load(MODELS_DIR / "scaler_all.joblib")
-        self.scaler_comb = joblib.load(MODELS_DIR / "scaler_comb.joblib")
 
         import xgboost as xgb
         self.xgb = xgb.XGBClassifier()
@@ -45,35 +46,28 @@ class Predictor:
         if (MODELS_DIR / "hgb.joblib").exists():
             self.hgb = joblib.load(MODELS_DIR / "hgb.joblib")
 
-        # Thresholds from training
+        # Asymmetric thresholds (calibrated on training set)
         self.up_thresh = self.ensemble_config["up_threshold"]
         self.down_thresh = self.ensemble_config["down_threshold"]
 
-    def _get_features(self, df: pd.DataFrame, feature_list: list) -> np.ndarray:
+        # Model names for iteration
+        self.model_names = ["lr_all", "xgb", "lgb", "cat", "rf", "hgb"]
+
+    def _get_features(self, df: pd.DataFrame) -> np.ndarray:
         """Extract feature array, handling missing columns and NaNs gracefully."""
-        available = [c for c in feature_list if c in df.columns]
-        missing = [c for c in feature_list if c not in df.columns]
+        available = [c for c in self.features if c in df.columns]
+        missing = [c for c in self.features if c not in df.columns]
         if missing:
             print(f"Warning: missing features {missing}")
-        X = df[available].fillna(0).values
-        # Diagnostic: check for extreme NaN count
-        nan_count = df[available].isna().sum().sum()
-        total = len(available) * len(df)
-        if nan_count > 0:
-            print(f"Feature diagnostic: {nan_count}/{total} NaN values filled with 0")
-            # Log which specific features have NaN
-            for col in available:
-                n = df[col].isna().sum()
-                if n > 0:
-                    print(f"  NaN in '{col}': {n}/{len(df)} rows")
-        # If some features are missing, fill with zeros (not ideal but safe for live)
-        if len(available) < len(feature_list):
-            X_full = np.zeros((len(df), len(feature_list)))
-            for i, col in enumerate(feature_list):
+
+        if len(available) < len(self.features):
+            X_full = np.zeros((len(df), len(self.features)))
+            for i, col in enumerate(self.features):
                 if col in df.columns:
                     X_full[:, i] = df[col].fillna(0).values
-            X = X_full
-        return X
+            return X_full
+
+        return df[available].fillna(0).values
 
     def predict(self, df: pd.DataFrame) -> dict:
         """Run all models on the latest row of the dataframe."""
@@ -82,25 +76,40 @@ class Predictor:
 
         latest = df.iloc[-1:].copy()
 
-        # Get features
-        X_all = self._get_features(latest, self.all_features)
-        X_comb = self._get_features(latest, self.combined_features)
+        # Get features (single feature set for all models)
+        X = self._get_features(latest)
+        X_scaled = self.scaler.transform(X)
 
-        # Scale
-        X_all_s = self.scaler_all.transform(X_all)
-        X_comb_s = self.scaler_comb.transform(X_comb)
+        # Get probabilities from all models
+        models = {}
 
-        # Predictions (probability of UP)
-        proba_lr_all = float(self.lr_all.predict_proba(X_all_s)[0, 1])
-        proba_lr_comb = float(self.lr_comb.predict_proba(X_comb_s)[0, 1])
-        proba_xgb = float(self.xgb.predict_proba(X_all)[0, 1])
-        lgb_pred = self.lgb.predict(X_all)
+        proba_lr = float(self.lr_all.predict_proba(X_scaled)[0, 1])
+        models["lr_all"] = {"proba": proba_lr, "signal": self._signal(proba_lr)}
+
+        proba_xgb = float(self.xgb.predict_proba(X)[0, 1])
+        models["xgb"] = {"proba": proba_xgb, "signal": self._signal(proba_xgb)}
+
+        lgb_pred = self.lgb.predict(X)
         proba_lgb = float(lgb_pred[0] if hasattr(lgb_pred, '__len__') else lgb_pred)
+        models["lgb"] = {"proba": proba_lgb, "signal": self._signal(proba_lgb)}
 
-        # Ensemble (equal weights)
-        ensemble_proba = np.mean([proba_lr_comb, proba_xgb, proba_lgb])
+        if self.cat is not None:
+            proba_cat = float(self.cat.predict_proba(X)[0, 1])
+            models["cat"] = {"proba": proba_cat, "signal": self._signal(proba_cat)}
 
-        # Determine signal
+        if self.rf is not None:
+            proba_rf = float(self.rf.predict_proba(X_scaled)[0, 1])
+            models["rf"] = {"proba": proba_rf, "signal": self._signal(proba_rf)}
+
+        if self.hgb is not None:
+            proba_hgb = float(self.hgb.predict_proba(X)[0, 1])
+            models["hgb"] = {"proba": proba_hgb, "signal": self._signal(proba_hgb)}
+
+        # Equal-weight ensemble of all available models
+        probas = [m["proba"] for m in models.values()]
+        ensemble_proba = np.mean(probas)
+
+        # Determine signal using asymmetric thresholds
         if ensemble_proba > self.up_thresh:
             signal = "UP"
             confidence = float((ensemble_proba - self.up_thresh) / (1 - self.up_thresh))
@@ -110,26 +119,6 @@ class Predictor:
         else:
             signal = "HOLD"
             confidence = 0.0
-
-        # Individual model votes
-        models = {
-            "lr_comb": {"proba": proba_lr_comb, "signal": self._signal(proba_lr_comb)},
-            "xgb": {"proba": proba_xgb, "signal": self._signal(proba_xgb)},
-            "lgb": {"proba": proba_lgb, "signal": self._signal(proba_lgb)},
-            "lr_all": {"proba": proba_lr_all, "signal": self._signal(proba_lr_all)},
-        }
-
-        if self.cat is not None:
-            proba_cat = float(self.cat.predict_proba(X_all)[0, 1])
-            models["cat"] = {"proba": proba_cat, "signal": self._signal(proba_cat)}
-
-        if self.rf is not None:
-            proba_rf = float(self.rf.predict_proba(X_all)[0, 1])
-            models["rf"] = {"proba": proba_rf, "signal": self._signal(proba_rf)}
-
-        if self.hgb is not None:
-            proba_hgb = float(self.hgb.predict_proba(X_all)[0, 1])
-            models["hgb"] = {"proba": proba_hgb, "signal": self._signal(proba_hgb)}
 
         # Count votes
         up_votes = sum(1 for m in models.values() if m["signal"] == "UP")
