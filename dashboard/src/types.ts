@@ -17,6 +17,10 @@ export interface LiveStats {
   equity: number;
   peak: number;
   max_drawdown: number;
+  ci_low: number;
+  ci_high: number;
+  pending_count: number;
+  equity_history: number[];
 }
 
 export interface PredictionData {

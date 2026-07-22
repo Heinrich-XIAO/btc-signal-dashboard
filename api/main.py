@@ -1,6 +1,7 @@
 """FastAPI backend with WebSocket live predictions and live accuracy tracking."""
 import asyncio
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Optional, Any
@@ -13,6 +14,23 @@ from fastapi.responses import FileResponse
 from api.binance_client import fetch_all_timeframes
 from api.live_features import compute_live_features
 from api.predictor import Predictor
+
+def _wilson_score_interval(correct: int, total: int, z: float = 1.96):
+    """Compute Wilson score confidence interval for a binomial proportion.
+
+    Returns (lower, upper) as percentages (0-100).
+    If total == 0, returns (0, 100).
+    """
+    if total == 0:
+        return (0.0, 100.0)
+    p_hat = correct / total
+    denominator = 1 + z ** 2 / total
+    center = (p_hat + z ** 2 / (2 * total)) / denominator
+    spread = z * math.sqrt((p_hat * (1 - p_hat) + z ** 2 / (4 * total)) / total) / denominator
+    lower = max(0.0, (center - spread) * 100)
+    upper = min(100.0, (center + spread) * 100)
+    return (round(lower, 1), round(upper, 1))
+
 
 app = FastAPI(title="BTC Signal Dashboard API")
 
@@ -59,6 +77,9 @@ live_stats = {
     "max_drawdown": 0.0,      # Max drawdown from peak (negative %)
 }
 
+# Equity history for sparkline (list of ints)
+equity_history: List[int] = []
+
 # Stats persistence
 STATS_FILE = Path(__file__).parent / "stats.json"
 RESOLVED_FILE = Path(__file__).parent / "resolved.json"
@@ -66,11 +87,13 @@ RESOLVED_FILE = Path(__file__).parent / "resolved.json"
 
 def _load_stats():
     """Load persisted stats if available."""
-    global live_stats, resolved_signals
+    global live_stats, resolved_signals, equity_history
     if STATS_FILE.exists():
         try:
             with open(STATS_FILE, "r") as f:
                 loaded = json.load(f)
+                # Equity history is stored separately, not in live_stats dict
+                equity_history = loaded.pop("equity_history", [])
                 live_stats.update(loaded)
         except Exception:
             pass
@@ -86,7 +109,9 @@ def _save_stats():
     """Persist stats to disk."""
     try:
         with open(STATS_FILE, "w") as f:
-            json.dump(live_stats, f)
+            to_save = live_stats.copy()
+            to_save["equity_history"] = equity_history[-500:]
+            json.dump(to_save, f)
         with open(RESOLVED_FILE, "w") as f:
             json.dump(resolved_signals[-max_resolved:], f)
     except Exception as e:
@@ -116,7 +141,7 @@ def _resolve_pending_signals(df_5m: Any):
         iloc[-3] = T (completed)
     We compare close[T+1] > close[T] and look for the pending signal keyed by T.
     """
-    global live_stats, resolved_signals, pending_signals
+    global live_stats, resolved_signals, pending_signals, equity_history
 
     if df_5m is None or len(df_5m) < 3:
         # Need at least 3 candles: T (predicted), T+1 (to verify), T+2 (current)
@@ -165,6 +190,9 @@ def _resolve_pending_signals(df_5m: Any):
         elif result in ("FP", "FN"):
             pnl = -1
         live_stats["equity"] += pnl
+        equity_history.append(live_stats["equity"])
+        if len(equity_history) > 500:
+            equity_history.pop(0)
         if live_stats["equity"] > live_stats["peak"]:
             live_stats["peak"] = live_stats["equity"]
         drawdown = live_stats["equity"] - live_stats["peak"]
@@ -237,7 +265,17 @@ async def _run_prediction_cycle():
                 latest_prediction["price"] = latest_price["price"]
                 latest_prediction["timestamp"] = datetime.now(timezone.utc).isoformat()
                 latest_prediction["countdown"] = _compute_next_candle_countdown()
-                
+
+                # Refresh stats snapshot
+                stats_snapshot = live_stats.copy()
+                n = stats_snapshot["total_predictions"]
+                stats_snapshot["ci_low"], stats_snapshot["ci_high"] = _wilson_score_interval(
+                    stats_snapshot["correct"], n
+                )
+                stats_snapshot["pending_count"] = len(pending_signals)
+                stats_snapshot["equity_history"] = equity_history[-100:]
+                latest_prediction["live_stats"] = stats_snapshot
+
                 message = json.dumps({"type": "prediction", "data": latest_prediction})
                 disconnected = []
                 for client in clients:
@@ -279,7 +317,16 @@ async def _run_prediction_cycle():
         prediction["timestamp"] = datetime.now(timezone.utc).isoformat()
         prediction["countdown"] = _compute_next_candle_countdown()
         prediction["price"] = latest_price["price"]
-        prediction["live_stats"] = live_stats.copy()
+
+        # Enrich stats with Wilson CI and pending count for frontend
+        stats_snapshot = live_stats.copy()
+        n = stats_snapshot["total_predictions"]
+        stats_snapshot["ci_low"], stats_snapshot["ci_high"] = _wilson_score_interval(
+            stats_snapshot["correct"], n
+        )
+        stats_snapshot["pending_count"] = len(pending_signals)
+        stats_snapshot["equity_history"] = equity_history[-100:]
+        prediction["live_stats"] = stats_snapshot
 
         # Store this prediction as pending (keyed by current candle time)
         pending_signals[current_candle_time] = {
@@ -347,14 +394,22 @@ async def get_history(limit: int = 20):
 
 @app.get("/api/stats")
 async def get_stats():
-    """Get live accuracy stats."""
-    return live_stats
+    """Get live accuracy stats with Wilson score confidence interval."""
+    n = live_stats["total_predictions"]
+    correct = live_stats["correct"]
+    ci_low, ci_high = _wilson_score_interval(correct, n)
+    result = live_stats.copy()
+    result["ci_low"] = ci_low
+    result["ci_high"] = ci_high
+    result["pending_count"] = len(pending_signals)
+    result["equity_history"] = equity_history[-100:]
+    return result
 
 
 @app.post("/api/reset")
 async def reset_stats():
     """Reset all live stats and history."""
-    global live_stats, resolved_signals, pending_signals
+    global live_stats, resolved_signals, pending_signals, equity_history
 
     live_stats.update({
         "total_predictions": 0,
@@ -373,6 +428,7 @@ async def reset_stats():
     })
     resolved_signals.clear()
     pending_signals.clear()
+    equity_history.clear()
 
     # Delete persisted files
     try:

@@ -56,6 +56,16 @@ class Predictor:
         if missing:
             print(f"Warning: missing features {missing}")
         X = df[available].fillna(0).values
+        # Diagnostic: check for extreme NaN count
+        nan_count = df[available].isna().sum().sum()
+        total = len(available) * len(df)
+        if nan_count > 0:
+            print(f"Feature diagnostic: {nan_count}/{total} NaN values filled with 0")
+            # Log which specific features have NaN
+            for col in available:
+                n = df[col].isna().sum()
+                if n > 0:
+                    print(f"  NaN in '{col}': {n}/{len(df)} rows")
         # If some features are missing, fill with zeros (not ideal but safe for live)
         if len(available) < len(feature_list):
             X_full = np.zeros((len(df), len(feature_list)))

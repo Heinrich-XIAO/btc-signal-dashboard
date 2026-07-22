@@ -20,6 +20,8 @@ const MODEL_NAMES: Record<string, string> = {
 };
 
 export function MobileSignalBar({ prediction, connected }: MobileSignalBarProps) {
+  const stats = prediction?.live_stats;
+
   return (
     <div className="flex flex-col h-screen bg-bg">
       <PriceHeader prediction={prediction} connected={connected} />
@@ -45,6 +47,33 @@ export function MobileSignalBar({ prediction, connected }: MobileSignalBarProps)
           </div>
         )}
       </div>
+
+      {/* Compact stats bar */}
+      {stats && stats.total_predictions >= 2 && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center justify-center gap-3 text-xs text-text-dim">
+            <span>
+              Acc{' '}
+              <span className={`font-mono font-semibold ${stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
+                {stats.accuracy.toFixed(0)}%
+              </span>
+              <span className="text-text-dim/60 ml-0.5">
+                [{stats.ci_low.toFixed(0)}–{stats.ci_high.toFixed(0)}]
+              </span>
+            </span>
+            <span className="text-border">|</span>
+            <span>
+              {stats.correct}/{stats.total_predictions}
+            </span>
+            {stats.pending_count > 0 && (
+              <>
+                <span className="text-border">|</span>
+                <span className="text-hold">{stats.pending_count} pending</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="border-t border-border bg-surface p-3">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">

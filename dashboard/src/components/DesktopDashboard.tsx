@@ -3,6 +3,7 @@ import { SignalPill } from './SignalPill';
 import { CountdownTimer } from './CountdownTimer';
 import { PriceHeader } from './PriceHeader';
 import { ConfirmModal } from './ConfirmModal';
+import { EquitySparkline } from './EquitySparkline';
 import type { PredictionData, HistoryEntry } from '../types';
 
 interface DesktopDashboardProps {
@@ -72,14 +73,22 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
             </h3>
             {stats ? (
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-text-dim">Live Accuracy</span>
+                {/* Accuracy with Wilson CI */}
+                <div className="flex justify-between items-baseline">
+                  <span className="text-text-dim">Accuracy</span>
                   {stats.total_predictions >= 10 ? (
-                    <span className={`font-mono font-semibold ${stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
-                      {stats.accuracy.toFixed(1)}%
-                    </span>
+                    <div className="text-right">
+                      <span className={`font-mono font-semibold ${stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
+                        {stats.accuracy.toFixed(1)}%
+                      </span>
+                      <span className="text-text-dim text-xs ml-1">
+                        [{stats.ci_low.toFixed(0)}–{stats.ci_high.toFixed(0)}]
+                      </span>
+                    </div>
                   ) : (
-                    <span className="font-mono text-text-dim text-xs">Need {10 - stats.total_predictions} more</span>
+                    <span className="font-mono text-text-dim text-xs">
+                      Need {10 - stats.total_predictions} more
+                    </span>
                   )}
                 </div>
                 <div className="flex justify-between text-xs text-text-dim">
@@ -88,6 +97,15 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                     <span className="text-down/70">Unreliable until 10+</span>
                   )}
                 </div>
+
+                {/* Pending predictions */}
+                {stats.pending_count > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-text-dim">In flight</span>
+                    <span className="text-hold font-mono">{stats.pending_count} waiting</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span className="text-text-dim">Coverage</span>
                   <span className="text-text font-mono">{stats.coverage.toFixed(1)}%</span>
@@ -102,6 +120,16 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                     {stats.max_drawdown}
                   </span>
                 </div>
+
+                {/* Equity sparkline */}
+                {stats.equity_history && stats.equity_history.length >= 2 && (
+                  <div className="border-t border-border pt-2 mt-2">
+                    <p className="text-xs text-text-dim uppercase tracking-wider mb-2">
+                      Equity Curve ({stats.equity})
+                    </p>
+                    <EquitySparkline data={stats.equity_history} width={220} height={44} />
+                  </div>
+                )}
 
                 <div className="border-t border-border pt-2 mt-2">
                   <p className="text-xs text-text-dim uppercase tracking-wider mb-2">Confusion Matrix</p>
