@@ -152,13 +152,14 @@
       "accuracy": 0.7160096540627514,
       "coverage": 0.24010044427274482,
       "n_trades": 2486,
-    "up_threshold": 0.58,
-    "down_threshold": 0.47,
-    "models": [
-      "lr_comb",
-      "xgb",
-      "lgb"
-    ]
+      "up_threshold": 0.58,
+      "down_threshold": 0.47,
+      "models": [
+        "lr_comb",
+        "xgb",
+        "lgb"
+      ]
+    }
   },
   "ensemble_config": {
     "models": [
