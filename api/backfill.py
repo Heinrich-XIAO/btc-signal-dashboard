@@ -46,7 +46,7 @@ def main():
 
     print(f"Got {len(df_5m)} 5m candles, latest: {df_5m.index[-1]}")
 
-    num_predictions = 16
+    num_predictions = min(200, len(df_5m) - 52)
     min_valid_idx = 50
     max_valid_idx = len(df_5m) - 2
 
@@ -67,9 +67,14 @@ def main():
         if start_idx < min_valid_idx:
             start_idx = min_valid_idx
 
+    # Stats tracking
+    ens_tp = ens_fp = ens_tn = ens_fn = ens_hold = 0
+    lr_tp = lr_fp = lr_tn = lr_fn = lr_hold = 0
+    total = 0
+
     print(f"\nSimulating predictions at candle starts (candles {start_idx}..{end_idx})...\n")
-    print(f"{'Time (China)':<12} {'Signal':<7} {'Conf%':>6} {'Ens%':>7} {'Actual':>7} {'Correct':>8}")
-    print("-" * 70)
+    print(f"{'Time (China)':<12} {'Ensemble':<7} {'✓/✗':>4} │ {'LR_Comb':<7} {'✓/✗':>4} │ {'Actual':>7} {'Ens%':>7} {'LR%':>7}")
+    print("-" * 75)
 
     for offset in range(start_idx, end_idx + 1):
         candle_t = df_5m.iloc[offset]
@@ -97,9 +102,20 @@ def main():
             continue
 
         prediction = predictor.predict(df_features)
-        signal = prediction["signal"]
-        confidence = prediction["confidence"]
+        ensemble_signal = prediction["signal"]
         ensemble_proba = prediction["ensemble_proba"]
+        
+        # Get lr_comb standalone signal using its own thresholds
+        lr_comb_proba = prediction["models"]["lr_comb"]["proba"]
+        lr_comb_up_thresh = predictor.meta["model_results"]["lr_comb"]["up_threshold"] * 100
+        lr_comb_down_thresh = predictor.meta["model_results"]["lr_comb"]["down_threshold"] * 100
+        
+        if lr_comb_proba > lr_comb_up_thresh:
+            lr_comb_signal = "UP"
+        elif lr_comb_proba < lr_comb_down_thresh:
+            lr_comb_signal = "DOWN"
+        else:
+            lr_comb_signal = "HOLD"
 
         # Actual: did T+1 close higher than T?
         price_t = float(candle_t["close"])
@@ -107,23 +123,74 @@ def main():
         actual_up = price_t1 > price_t
         actual_signal = "UP" if actual_up else "DOWN"
 
-        if signal == "HOLD":
-            result_str = "-"
-        elif signal == actual_signal:
-            result_str = "✓"
+        if ensemble_signal == "HOLD":
+            ens_result = "-"
+            ens_hold += 1
+        elif ensemble_signal == actual_signal:
+            ens_result = "✓"
+            if actual_up:
+                ens_tp += 1
+            else:
+                ens_tn += 1
         else:
-            result_str = "✗"
+            ens_result = "✗"
+            if actual_up:
+                ens_fn += 1
+            else:
+                ens_fp += 1
+            
+        if lr_comb_signal == "HOLD":
+            lr_result = "-"
+            lr_hold += 1
+        elif lr_comb_signal == actual_signal:
+            lr_result = "✓"
+            if actual_up:
+                lr_tp += 1
+            else:
+                lr_tn += 1
+        else:
+            lr_result = "✗"
+            if actual_up:
+                lr_fn += 1
+            else:
+                lr_fp += 1
 
+        total += 1
         china_time = (candle_t_time + LOCAL_OFFSET).strftime("%I:%M %p").lstrip("0")
 
         print(
-            f"{china_time:<12} {signal:<7} {confidence:>6.1f} {ensemble_proba:>7.2f} "
-            f"{actual_signal:>7} {result_str:>8}"
+            f"{china_time:<12} {ensemble_signal:<7} {ens_result:>4} │ "
+            f"{lr_comb_signal:<7} {lr_result:>4} │ {actual_signal:>7} "
+            f"{ensemble_proba:>7.2f} {lr_comb_proba:>7.2f}"
         )
 
-    print("-" * 70)
-    print("\nNote: Predictions are made at candle OPEN using data up to previous candle close.")
-    print("This matches how the live system should record signals.")
+    print("-" * 75)
+
+    # Summary
+    ens_total_pred = ens_tp + ens_fp + ens_tn + ens_fn
+    lr_total_pred = lr_tp + lr_fp + lr_tn + lr_fn
+    ens_correct = ens_tp + ens_tn
+    lr_correct = lr_tp + lr_tn
+
+    print(f"\n{'='*75}")
+    print(f"ENSEMBLE ({ens_total_pred} predictions, {ens_hold} holds, {total} total candles)")
+    print(f"  TP={ens_tp}  FP={ens_fp}  TN={ens_tn}  FN={ens_fn}")
+    if ens_total_pred > 0:
+        print(f"  Accuracy: {ens_correct}/{ens_total_pred} = {ens_correct/ens_total_pred*100:.1f}%")
+        print(f"  Coverage: {ens_total_pred}/{total} = {ens_total_pred/total*100:.1f}%")
+    else:
+        print(f"  No predictions made (all HOLD)")
+
+    print(f"\nLR_COMB ({lr_total_pred} predictions, {lr_hold} holds, {total} total candles)")
+    print(f"  TP={lr_tp}  FP={lr_fp}  TN={lr_tn}  FN={lr_fn}")
+    if lr_total_pred > 0:
+        print(f"  Accuracy: {lr_correct}/{lr_total_pred} = {lr_correct/lr_total_pred*100:.1f}%")
+        print(f"  Coverage: {lr_total_pred}/{total} = {lr_total_pred/total*100:.1f}%")
+    else:
+        print(f"  No predictions made (all HOLD)")
+
+    print(f"\nNote: Predictions are made at candle OPEN using data up to previous candle close.")
+    print(f"Ensemble thresholds: UP>66.97%, DOWN<32.44% | LR_Comb thresholds: UP>65.08%, DOWN<34.59%")
 
 
 if __name__ == "__main__":

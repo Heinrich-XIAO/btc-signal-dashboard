@@ -152,14 +152,13 @@
       "accuracy": 0.7160096540627514,
       "coverage": 0.24010044427274482,
       "n_trades": 2486,
-      "up_threshold": 0.6696951636052942,
-      "down_threshold": 0.32442814293637673,
-      "models": [
-        "lr_comb",
-        "xgb",
-        "lgb"
-      ]
-    }
+    "up_threshold": 0.58,
+    "down_threshold": 0.47,
+    "models": [
+      "lr_comb",
+      "xgb",
+      "lgb"
+    ]
   },
   "ensemble_config": {
     "models": [
@@ -172,8 +171,8 @@
       0.3333333333333333,
       0.3333333333333333
     ],
-    "up_threshold": 0.6696951636052942,
-    "down_threshold": 0.32442814293637673
+    "up_threshold": 0.58,
+    "down_threshold": 0.47
   },
   "training_rows": 34512,
   "train_split": 24158,
