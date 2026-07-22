@@ -367,6 +367,9 @@ async def reset_stats():
         "true_negatives": 0,
         "false_negatives": 0,
         "holds": 0,
+        "equity": 0,
+        "peak": 0,
+        "max_drawdown": 0.0,
     })
     resolved_signals.clear()
     pending_signals.clear()
