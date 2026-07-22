@@ -255,13 +255,26 @@ async def _run_prediction_cycle():
         last_predicted_candle_time = current_candle_time
         print(f"New candle at {df_5m.index[-1]} UTC - generating prediction...")
 
-        # Compute features
-        df_features = compute_live_features(data)
+        # Compute features using ONLY completed candles (exclude current forming candle)
+        # This matches how the model was trained - on completed candle data
+        completed_data = {}
+        current_candle_start = df_5m.index[-1]
+        for tf, tf_df in data.items():
+            if tf_df is None:
+                completed_data[tf] = None
+            elif tf == "5m":
+                # Exclude last (forming) candle
+                completed_data[tf] = tf_df.iloc[:-1].copy()
+            else:
+                # Exclude any data from the current candle's time window
+                completed_data[tf] = tf_df[tf_df.index < current_candle_start].copy()
+        
+        df_features = compute_live_features(completed_data)
         if df_features is None or df_features.empty:
             print("Feature computation failed")
             return
 
-        # Run prediction (at candle start - signal is locked for this candle)
+        # Run prediction (at candle start using only prior completed candles)
         prediction = predictor.predict(df_features)
         prediction["timestamp"] = datetime.now(timezone.utc).isoformat()
         prediction["countdown"] = _compute_next_candle_countdown()
