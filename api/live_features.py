@@ -301,4 +301,11 @@ def compute_live_features(data: Dict[str, Optional[pd.DataFrame]]) -> Optional[p
         df_funding=data.get("funding"),
     )
 
+    # Forward-fill NaN values from multi-timeframe alignment gaps.
+    # Without this, features like 1h_rsi, 4h_rsi etc. are NaN at the end of the
+    # DataFrame and the predictor fills them with 0 — far outside the training
+    # distribution — causing logistic regression to output extreme probabilities.
+    df = df.ffill()
+    df = df.bfill()
+
     return df
