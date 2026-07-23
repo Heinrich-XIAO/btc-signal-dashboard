@@ -130,35 +130,42 @@ def _compute_next_candle_countdown() -> int:
 
 
 def _resolve_pending_signals(df_5m: Any):
-    """Check if any pending predictions can now be resolved.
+    """Resolve ALL pending predictions whose verification candle has closed.
 
     A prediction made during candle T (keyed by T's open time) says whether
-    candle T+1 will close higher than candle T. We can only verify this after
-    candle T+1 has fully closed, which means T+2 is the current forming candle.
-    At that point:
-        iloc[-1] = T+2 (forming)
-        iloc[-2] = T+1 (just completed)
-        iloc[-3] = T (completed)
-    We compare close[T+1] > close[T] and look for the pending signal keyed by T.
+    candle T+1 will close higher than candle T. We verify after T+1 closes,
+    i.e. when the dataframe has a candle at T+2 (the current forming candle).
+
+    For each pending signal keyed by T (ms), we find T and T+1 in the
+    dataframe and resolve if T+1 is a completed candle.
     """
     global live_stats, resolved_signals, pending_signals, equity_history
 
     if df_5m is None or len(df_5m) < 3:
-        # Need at least 3 candles: T (predicted), T+1 (to verify), T+2 (current)
         return
 
-    # T+2 is forming, T+1 just completed, T is the one we predicted during
-    key_to_resolve = int(df_5m.index[-3].timestamp() * 1000)
-    close_t_plus_1 = float(df_5m["close"].iloc[-2])
-    close_t = float(df_5m["close"].iloc[-3])
-    actual_up = close_t_plus_1 > close_t
+    # Build a map of candle time (ms) -> close price for all completed candles
+    # (exclude the last one which is still forming)
+    completed = df_5m.iloc[:-1]
+    candle_map = {}
+    for ts in completed.index:
+        key = int(ts.timestamp() * 1000)
+        candle_map[key] = float(completed.loc[ts, "close"])
 
-    signal_to_resolve = pending_signals.pop(key_to_resolve, None)
+    # Find all resolvable signals
+    resolved_any = False
+    for key in list(pending_signals.keys()):
+        # We need candle T (key) and candle T+1 (key + 300000) to both exist
+        close_t = candle_map.get(key)
+        close_t_plus_1 = candle_map.get(key + 5 * 60 * 1000)  # T+1 is 5min later
 
-    if signal_to_resolve:
-        predicted_signal = signal_to_resolve.get("signal", "HOLD")
+        if close_t is None or close_t_plus_1 is None:
+            continue
 
-        # Determine correctness
+        signal_info = pending_signals.pop(key)
+        predicted_signal = signal_info.get("signal", "HOLD")
+        actual_up = close_t_plus_1 > close_t
+
         result = None
         if predicted_signal == "UP":
             live_stats["total_predictions"] += 1
@@ -183,7 +190,6 @@ def _resolve_pending_signals(df_5m: Any):
 
         live_stats["total_candles"] += 1
 
-        # Update equity and max drawdown (only for actual predictions, not holds)
         pnl = 0
         if result in ("TP", "TN"):
             pnl = 1
@@ -199,7 +205,32 @@ def _resolve_pending_signals(df_5m: Any):
         if drawdown < live_stats["max_drawdown"]:
             live_stats["max_drawdown"] = drawdown
 
-        # Calculate derived stats
+        resolved_any = True
+        resolved = {
+            "predicted_at": signal_info.get("timestamp"),
+            "resolved_at": datetime.now(timezone.utc).isoformat(),
+            "predicted_signal": predicted_signal,
+            "actual": "UP" if actual_up else "DOWN",
+            "result": result,
+            "price_at_prediction": signal_info.get("price"),
+            "price_now": close_t_plus_1,
+            "confidence": signal_info.get("confidence"),
+            "equity": live_stats["equity"],
+            "drawdown": drawdown,
+        }
+        resolved_signals.append(resolved)
+        if len(resolved_signals) > max_resolved:
+            resolved_signals.pop(0)
+
+        print(
+            f"Resolved: predicted {predicted_signal}, actual {'UP' if actual_up else 'DOWN'} -> {result} | "
+            f"Accuracy: {live_stats['accuracy']}% ({live_stats['correct']}/{live_stats['total_predictions']}) | "
+            f"Coverage: {live_stats['coverage']}% | "
+            f"Equity: {live_stats['equity']} | MaxDD: {live_stats['max_drawdown']}"
+        )
+
+    if resolved_any:
+        # Recalculate derived stats
         if live_stats["total_predictions"] > 0:
             live_stats["accuracy"] = round(
                 live_stats["correct"] / live_stats["total_predictions"] * 100, 1
@@ -209,31 +240,7 @@ def _resolve_pending_signals(df_5m: Any):
             live_stats["coverage"] = round(
                 live_stats["total_predictions"] / total_observed * 100, 1
             )
-
-        # Record resolved signal
-        resolved = {
-            "predicted_at": signal_to_resolve.get("timestamp"),
-            "resolved_at": datetime.now(timezone.utc).isoformat(),
-            "predicted_signal": predicted_signal,
-            "actual": "UP" if actual_up else "DOWN",
-            "result": result,
-            "price_at_prediction": signal_to_resolve.get("price"),
-            "price_now": close_t_plus_1,
-            "confidence": signal_to_resolve.get("confidence"),
-            "equity": live_stats["equity"],
-            "drawdown": drawdown,
-        }
-        resolved_signals.append(resolved)
-        if len(resolved_signals) > max_resolved:
-            resolved_signals.pop(0)
-
         _save_stats()
-        print(
-            f"Resolved: predicted {predicted_signal}, actual {'UP' if actual_up else 'DOWN'} -> {result} | "
-            f"Accuracy: {live_stats['accuracy']}% ({live_stats['correct']}/{live_stats['total_predictions']}) | "
-            f"Coverage: {live_stats['coverage']}% | "
-            f"Equity: {live_stats['equity']} | MaxDD: {live_stats['max_drawdown']}"
-        )
 
 
 async def _run_prediction_cycle():
@@ -336,13 +343,11 @@ async def _run_prediction_cycle():
             "confidence": prediction["confidence"],
         }
 
-        # Clean old pending signals (older than 15 minutes)
-        cutoff = current_candle_time - 15 * 60 * 1000
+        # Clean old pending signals that can't be resolved (candles fell off dataframe)
+        cutoff = current_candle_time - 30 * 60 * 1000
         for key in list(pending_signals.keys()):
             if key < cutoff:
                 pending_signals.pop(key, None)
-                live_stats["holds"] += 1
-                live_stats["total_candles"] += 1
 
         latest_prediction = prediction
 
