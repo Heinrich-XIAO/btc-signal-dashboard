@@ -379,9 +379,49 @@ async def _run_prediction_cycle():
 
 
 async def prediction_loop():
-    """Background loop: run predictions every 30 seconds."""
+    """Background loop: run predictions once at the start of each 5m candle."""
     while True:
+        # Sleep until the next 5-minute boundary
+        now = datetime.now(timezone.utc)
+        seconds = now.minute * 60 + now.second
+        next_5m_seconds = ((seconds // 300) + 1) * 300
+        sleep_time = next_5m_seconds - seconds
+        if sleep_time <= 0:
+            sleep_time = 300
+        await asyncio.sleep(sleep_time)
         await _run_prediction_cycle()
+
+
+async def stats_broadcast_loop():
+    """Background loop: broadcast updated stats every 30 seconds (no re-prediction)."""
+    while True:
+        await asyncio.sleep(30)
+        try:
+            if latest_prediction and clients:
+                stats_snapshot = live_stats.copy()
+                n = stats_snapshot["total_predictions"]
+                stats_snapshot["ci_low"], stats_snapshot["ci_high"] = _wilson_score_interval(
+                    stats_snapshot["correct"], n
+                )
+                n_cov = stats_snapshot["total_predictions"] + stats_snapshot["holds"]
+                stats_snapshot["cov_ci_low"], stats_snapshot["cov_ci_high"] = _wilson_score_interval(
+                    stats_snapshot["total_predictions"], n_cov
+                )
+                stats_snapshot["pending_count"] = len(pending_signals)
+                stats_snapshot["equity_history"] = equity_history[-100:]
+
+                msg = json.dumps({"type": "stats_update", "live_stats": stats_snapshot})
+                disconnected = []
+                for client in clients:
+                    try:
+                        await client.send_text(msg)
+                    except Exception:
+                        disconnected.append(client)
+                for client in disconnected:
+                    if client in clients:
+                        clients.remove(client)
+        except Exception as e:
+            print(f"Stats broadcast error: {e}")
         await asyncio.sleep(30)
 
 
@@ -389,6 +429,7 @@ async def prediction_loop():
 async def startup():
     _load_stats()
     asyncio.create_task(prediction_loop())
+    asyncio.create_task(stats_broadcast_loop())
 
 
 @app.get("/api/signal")

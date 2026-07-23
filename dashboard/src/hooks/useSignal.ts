@@ -47,6 +47,9 @@ export function useSignal() {
         if (msg.type === 'prediction' && msg.data) {
           setPrediction(msg.data);
           setLastUpdate(new Date());
+        } else if (msg.type === 'stats_update' && msg.live_stats) {
+          setPrediction((prev) => prev ? { ...prev, live_stats: msg.live_stats } : prev);
+          setLastUpdate(new Date());
         }
       } catch (e) {
         console.error('Failed to parse message:', e);
