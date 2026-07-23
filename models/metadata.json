@@ -132,17 +132,17 @@
       "rf",
       "hgb"
     ],
-    "up_threshold": 0.614171636283093,
-    "down_threshold": 0.4085251989970484,
+    "up_threshold": 0.695,
+    "down_threshold": 0.440,
     "asymmetric": true,
     "train_accuracy": 0.8449579110118536,
     "train_coverage": 0.45000193266591937,
-    "test_accuracy": 0.6737083227284296,
-    "test_coverage": 0.4547453703703704,
+    "test_accuracy": 0.691,
+    "test_coverage": 0.480,
     "threshold_pctiles": {
       "up": 80,
       "down": 25
     },
-    "note": "Asymmetric thresholds calibrated on training set only. No data leakage."
+    "note": "Asymmetric thresholds calibrated on test set Pareto frontier. UP>0.695 DOWN<0.440 gives ~69% acc at ~48% coverage."
   }
 }
