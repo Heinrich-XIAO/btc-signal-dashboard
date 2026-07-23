@@ -49,17 +49,19 @@ export function MobileSignalBar({ prediction, connected }: MobileSignalBarProps)
       </div>
 
       {/* Compact stats bar */}
-      {stats && stats.total_predictions >= 2 && (
+      {stats && (
         <div className="px-4 pb-2">
           <div className="flex items-center justify-center gap-3 text-xs text-text-dim">
             <span>
               Acc{' '}
-              <span className={`font-mono font-semibold ${stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
-                {stats.accuracy.toFixed(0)}%
+              <span className={`font-mono font-semibold ${stats.total_predictions > 0 && stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
+                {stats.total_predictions > 0 ? stats.accuracy.toFixed(0) : '—'}%
               </span>
-              <span className="text-text-dim/60 ml-0.5">
-                [{stats.ci_low.toFixed(0)}–{stats.ci_high.toFixed(0)}]
-              </span>
+              {stats.total_predictions > 0 && (
+                <span className="text-text-dim/60 ml-0.5">
+                  ±{((stats.ci_high - stats.ci_low) / 2).toFixed(0)}
+                </span>
+              )}
             </span>
             <span className="text-border">|</span>
             <span>

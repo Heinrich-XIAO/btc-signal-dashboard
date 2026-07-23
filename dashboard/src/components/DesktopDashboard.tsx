@@ -76,20 +76,16 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
                 {/* Accuracy with Wilson CI */}
                 <div className="flex justify-between items-baseline">
                   <span className="text-text-dim">Accuracy</span>
-                  {stats.total_predictions >= 10 ? (
-                    <div className="text-right">
-                      <span className={`font-mono font-semibold ${stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
-                        {stats.accuracy.toFixed(1)}%
-                      </span>
-                      <span className="text-text-dim text-xs ml-1">
-                        [{stats.ci_low.toFixed(0)}–{stats.ci_high.toFixed(0)}]
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="font-mono text-text-dim text-xs">
-                      Need {10 - stats.total_predictions} more
+                  <div className="text-right">
+                    <span className={`font-mono font-semibold ${stats.total_predictions > 0 && stats.accuracy >= 50 ? 'text-up' : 'text-down'}`}>
+                      {stats.total_predictions > 0 ? stats.accuracy.toFixed(1) : '—'}%
                     </span>
-                  )}
+                    {stats.total_predictions > 0 && (
+                      <span className="text-text-dim text-xs ml-1">
+                        ±{((stats.ci_high - stats.ci_low) / 2).toFixed(1)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between text-xs text-text-dim">
                   <span>{stats.correct}/{stats.total_predictions} correct</span>
