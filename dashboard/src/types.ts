@@ -19,6 +19,8 @@ export interface LiveStats {
   max_drawdown: number;
   ci_low: number;
   ci_high: number;
+  cov_ci_low: number;
+  cov_ci_high: number;
   pending_count: number;
   equity_history: number[];
 }

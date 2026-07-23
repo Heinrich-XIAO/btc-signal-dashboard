@@ -279,6 +279,10 @@ async def _run_prediction_cycle():
                 stats_snapshot["ci_low"], stats_snapshot["ci_high"] = _wilson_score_interval(
                     stats_snapshot["correct"], n
                 )
+                n_cov = stats_snapshot["total_predictions"] + stats_snapshot["holds"]
+                stats_snapshot["cov_ci_low"], stats_snapshot["cov_ci_high"] = _wilson_score_interval(
+                    stats_snapshot["total_predictions"], n_cov
+                )
                 stats_snapshot["pending_count"] = len(pending_signals)
                 stats_snapshot["equity_history"] = equity_history[-100:]
                 latest_prediction["live_stats"] = stats_snapshot
@@ -325,11 +329,15 @@ async def _run_prediction_cycle():
         prediction["countdown"] = _compute_next_candle_countdown()
         prediction["price"] = latest_price["price"]
 
-        # Enrich stats with Wilson CI and pending count for frontend
+        # Enrich stats with Wilson CI for both accuracy and coverage
         stats_snapshot = live_stats.copy()
-        n = stats_snapshot["total_predictions"]
+        n_acc = stats_snapshot["total_predictions"]
         stats_snapshot["ci_low"], stats_snapshot["ci_high"] = _wilson_score_interval(
-            stats_snapshot["correct"], n
+            stats_snapshot["correct"], n_acc
+        )
+        n_cov = stats_snapshot["total_predictions"] + stats_snapshot["holds"]
+        stats_snapshot["cov_ci_low"], stats_snapshot["cov_ci_high"] = _wilson_score_interval(
+            stats_snapshot["total_predictions"], n_cov
         )
         stats_snapshot["pending_count"] = len(pending_signals)
         stats_snapshot["equity_history"] = equity_history[-100:]
@@ -403,9 +411,13 @@ async def get_stats():
     n = live_stats["total_predictions"]
     correct = live_stats["correct"]
     ci_low, ci_high = _wilson_score_interval(correct, n)
+    n_cov = live_stats["total_predictions"] + live_stats["holds"]
+    cov_ci_low, cov_ci_high = _wilson_score_interval(live_stats["total_predictions"], n_cov)
     result = live_stats.copy()
     result["ci_low"] = ci_low
     result["ci_high"] = ci_high
+    result["cov_ci_low"] = cov_ci_low
+    result["cov_ci_high"] = cov_ci_high
     result["pending_count"] = len(pending_signals)
     result["equity_history"] = equity_history[-100:]
     return result

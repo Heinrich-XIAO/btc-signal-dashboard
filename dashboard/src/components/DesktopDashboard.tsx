@@ -104,7 +104,16 @@ export function DesktopDashboard({ prediction, history, connected }: DesktopDash
 
                 <div className="flex justify-between">
                   <span className="text-text-dim">Coverage</span>
-                  <span className="text-text font-mono">{stats.coverage.toFixed(1)}%</span>
+                  <span className="text-text font-mono">
+                    {stats.total_predictions + stats.holds > 0 ? (
+                      <>
+                        {stats.coverage.toFixed(1)}%
+                        <span className="text-text-dim text-xs ml-1">
+                          ±{((stats.cov_ci_high - stats.cov_ci_low) / 2).toFixed(1)}
+                        </span>
+                      </>
+                    ) : '—%'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-dim">Signals / Holds</span>
