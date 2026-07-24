@@ -1,42 +1,21 @@
-"""Simulate what the predictor would have said at the start of each candle."""
+"""Simulate predictions at each 5m candle boundary and backfill stats."""
 import sys
 from pathlib import Path
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import json
 import pandas as pd
 import numpy as np
 from datetime import datetime, timezone, timedelta
-
 from api.binance_client import fetch_all_timeframes
 from api.live_features import compute_live_features
 from api.predictor import Predictor
+from api.main import _wilson_score_interval
 
-
-# China = UTC+8
-LOCAL_OFFSET = timedelta(hours=+8)
-
-
-def parse_target_time(arg: str) -> datetime:
-    """Parse a time string like '21:30' as today in UTC."""
-    now = datetime.now(timezone.utc)
-    parts = arg.split(":")
-    hour, minute = int(parts[0]), int(parts[1]) if len(parts) > 1 else 0
-    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    if target > now:
-        target -= timedelta(days=1)
-    return target
-
+LOCAL_OFFSET = timedelta(hours=8)
 
 def main():
     predictor = Predictor()
-
-    target_utc = None
-    if len(sys.argv) > 1:
-        target_utc = parse_target_time(sys.argv[1])
-        china_time = target_utc + LOCAL_OFFSET
-        print(f"Target time: {target_utc.strftime('%H:%M UTC')} ({china_time.strftime('%I:%M %p')} China)")
-
     print("Fetching data...")
     data = fetch_all_timeframes("BTCUSDT")
     df_5m = data.get("5m")
@@ -46,53 +25,43 @@ def main():
 
     print(f"Got {len(df_5m)} 5m candles, latest: {df_5m.index[-1]}")
 
+    # Backfill last 200 candles
     num_predictions = min(200, len(df_5m) - 52)
-    min_valid_idx = 50
-    max_valid_idx = len(df_5m) - 2
-
-    if target_utc:
-        diffs = abs(df_5m.index - target_utc)
-        closest_idx = diffs.argmin()
-        end_idx = closest_idx
-        start_idx = end_idx - num_predictions + 1
-        if start_idx < min_valid_idx:
-            start_idx = min_valid_idx
-            end_idx = min_valid_idx + num_predictions - 1
-        if end_idx > max_valid_idx:
-            end_idx = max_valid_idx
-            start_idx = max_valid_idx - num_predictions + 1
-    else:
-        end_idx = max_valid_idx
-        start_idx = end_idx - num_predictions + 1
-        if start_idx < min_valid_idx:
-            start_idx = min_valid_idx
+    end_idx = len(df_5m) - 2
+    start_idx = end_idx - num_predictions + 1
+    if start_idx < 50:
+        start_idx = 50
 
     # Stats tracking
-    ens_tp = ens_fp = ens_tn = ens_fn = ens_hold = 0
-    lr_tp = lr_fp = lr_tn = lr_fn = lr_hold = 0
-    total = 0
+    correct = 0
+    total_predictions = 0
+    holds = 0
+    total_candles = 0
+    equity = 0
+    peak = 0
+    max_drawdown = 0.0
+    true_positives = false_positives = true_negatives = false_negatives = 0
+    equity_history = []
 
-    print(f"\nSimulating predictions at candle starts (candles {start_idx}..{end_idx})...\n")
-    print(f"{'Time (China)':<12} {'Ensemble':<7} {'✓/✗':>4} │ {'LR_Comb':<7} {'✓/✗':>4} │ {'Actual':>7} {'Ens%':>7} {'LR%':>7}")
-    print("-" * 75)
+    print(f"\nSimulating {num_predictions} candles ({start_idx}..{end_idx})...\n")
+    print(f"{'Time':<12} {'Signal':<6} {'Actual':<7} {'Result':<7} {'Equity':>6}")
+    print("-" * 45)
 
     for offset in range(start_idx, end_idx + 1):
         candle_t = df_5m.iloc[offset]
         candle_t1 = df_5m.iloc[offset + 1]
         candle_t_time = df_5m.index[offset]
-        candle_t1_time = df_5m.index[offset + 1]
 
-        # Predict at the START of candle T (using data up to end of T-1)
-        # This matches how the live system should work: signal locked at candle open
-        df_slice = df_5m.iloc[: offset].copy()
-        cutoff_time = candle_t_time  # End of T-1
+        # Predict at candle OPEN using data up to T-1 (exclude forming candle T)
+        # This matches the live system: completed_data["5m"] = tf_df.iloc[:-1]
+        df_slice = df_5m.iloc[:offset].copy()
+        cutoff_time = candle_t_time
 
         sliced_data = {}
         for tf, tf_df in data.items():
             if tf_df is None:
                 sliced_data[tf] = None
-                continue
-            if tf == "5m":
+            elif tf == "5m":
                 sliced_data[tf] = df_slice
             else:
                 sliced_data[tf] = tf_df[tf_df.index <= cutoff_time]
@@ -102,95 +71,89 @@ def main():
             continue
 
         prediction = predictor.predict(df_features)
-        ensemble_signal = prediction["signal"]
-        ensemble_proba = prediction["ensemble_proba"]
-        
-        # Get lr_comb standalone signal using its own thresholds
-        lr_comb_proba = prediction["models"]["lr_comb"]["proba"]
-        lr_comb_up_thresh = predictor.meta["model_results"]["lr_comb"]["up_threshold"] * 100
-        lr_comb_down_thresh = predictor.meta["model_results"]["lr_comb"]["down_threshold"] * 100
-        
-        if lr_comb_proba > lr_comb_up_thresh:
-            lr_comb_signal = "UP"
-        elif lr_comb_proba < lr_comb_down_thresh:
-            lr_comb_signal = "DOWN"
-        else:
-            lr_comb_signal = "HOLD"
+        signal = prediction["signal"]
 
-        # Actual: did T+1 close higher than T?
+        # Actual outcome
         price_t = float(candle_t["close"])
         price_t1 = float(candle_t1["close"])
         actual_up = price_t1 > price_t
-        actual_signal = "UP" if actual_up else "DOWN"
+        actual = "UP" if actual_up else "DOWN"
 
-        if ensemble_signal == "HOLD":
-            ens_result = "-"
-            ens_hold += 1
-        elif ensemble_signal == actual_signal:
-            ens_result = "✓"
+        # Resolve
+        total_candles += 1
+        result = None
+        if signal == "UP":
+            total_predictions += 1
             if actual_up:
-                ens_tp += 1
+                result = "TP"
+                correct += 1
+                true_positives += 1
             else:
-                ens_tn += 1
+                result = "FP"
+                false_positives += 1
+        elif signal == "DOWN":
+            total_predictions += 1
+            if not actual_up:
+                result = "TN"
+                correct += 1
+                true_negatives += 1
+            else:
+                result = "FN"
+                false_negatives += 1
         else:
-            ens_result = "✗"
-            if actual_up:
-                ens_fn += 1
-            else:
-                ens_fp += 1
-            
-        if lr_comb_signal == "HOLD":
-            lr_result = "-"
-            lr_hold += 1
-        elif lr_comb_signal == actual_signal:
-            lr_result = "✓"
-            if actual_up:
-                lr_tp += 1
-            else:
-                lr_tn += 1
-        else:
-            lr_result = "✗"
-            if actual_up:
-                lr_fn += 1
-            else:
-                lr_fp += 1
+            holds += 1
 
-        total += 1
+        pnl = 0
+        if result in ("TP", "TN"):
+            pnl = 1
+        elif result in ("FP", "FN"):
+            pnl = -1
+        equity += pnl
+        equity_history.append(equity)
+        if equity > peak:
+            peak = equity
+        dd = equity - peak
+        if dd < max_drawdown:
+            max_drawdown = dd
+
+        symbol = "✓" if result in ("TP", "TN") else ("✗" if result in ("FP", "FN") else "-")
         china_time = (candle_t_time + LOCAL_OFFSET).strftime("%I:%M %p").lstrip("0")
 
-        print(
-            f"{china_time:<12} {ensemble_signal:<7} {ens_result:>4} │ "
-            f"{lr_comb_signal:<7} {lr_result:>4} │ {actual_signal:>7} "
-            f"{ensemble_proba:>7.2f} {lr_comb_proba:>7.2f}"
-        )
-
-    print("-" * 75)
+        print(f"{china_time:<12} {signal:<6} {actual:<7} {symbol:<7} {equity:>6}")
 
     # Summary
-    ens_total_pred = ens_tp + ens_fp + ens_tn + ens_fn
-    lr_total_pred = lr_tp + lr_fp + lr_tn + lr_fn
-    ens_correct = ens_tp + ens_tn
-    lr_correct = lr_tp + lr_tn
+    print("\n" + "=" * 45)
+    print(f"Total candles: {total_candles}")
+    print(f"Predictions: {total_predictions}  Holds: {holds}")
+    print(f"TP={true_positives}  FP={false_positives}  TN={true_negatives}  FN={false_negatives}")
+    if total_predictions > 0:
+        acc = correct / total_predictions * 100
+        cov = total_predictions / total_candles * 100
+        ci_low, ci_high = _wilson_score_interval(correct, total_predictions)
+        print(f"Accuracy: {correct}/{total_predictions} = {acc:.1f}% ±{(ci_high-ci_low)/2:.1f}")
+        print(f"Coverage: {total_predictions}/{total_candles} = {cov:.1f}%")
+    print(f"Equity: {equity}  Peak: {peak}  MaxDD: {max_drawdown}")
 
-    print(f"\n{'='*75}")
-    print(f"ENSEMBLE ({ens_total_pred} predictions, {ens_hold} holds, {total} total candles)")
-    print(f"  TP={ens_tp}  FP={ens_fp}  TN={ens_tn}  FN={ens_fn}")
-    if ens_total_pred > 0:
-        print(f"  Accuracy: {ens_correct}/{ens_total_pred} = {ens_correct/ens_total_pred*100:.1f}%")
-        print(f"  Coverage: {ens_total_pred}/{total} = {ens_total_pred/total*100:.1f}%")
-    else:
-        print(f"  No predictions made (all HOLD)")
-
-    print(f"\nLR_COMB ({lr_total_pred} predictions, {lr_hold} holds, {total} total candles)")
-    print(f"  TP={lr_tp}  FP={lr_fp}  TN={lr_tn}  FN={lr_fn}")
-    if lr_total_pred > 0:
-        print(f"  Accuracy: {lr_correct}/{lr_total_pred} = {lr_correct/lr_total_pred*100:.1f}%")
-        print(f"  Coverage: {lr_total_pred}/{total} = {lr_total_pred/total*100:.1f}%")
-    else:
-        print(f"  No predictions made (all HOLD)")
-
-    print(f"\nNote: Predictions are made at candle OPEN using data up to previous candle close.")
-    print(f"Ensemble thresholds: UP>66.97%, DOWN<32.44% | LR_Comb thresholds: UP>65.08%, DOWN<34.59%")
+    # Write to stats.json for deployment
+    stats = {
+        "total_predictions": total_predictions,
+        "total_candles": total_candles,
+        "correct": correct,
+        "accuracy": round(correct / total_predictions * 100, 1) if total_predictions > 0 else 0,
+        "coverage": round(total_predictions / total_candles * 100, 1) if total_candles > 0 else 0,
+        "true_positives": true_positives,
+        "false_positives": false_positives,
+        "true_negatives": true_negatives,
+        "false_negatives": false_negatives,
+        "holds": holds,
+        "equity": equity,
+        "peak": peak,
+        "max_drawdown": max_drawdown,
+    }
+    stats_path = Path(__file__).parent / "stats.json"
+    with open(stats_path, "w") as f:
+        json.dump(stats, f)
+    print(f"\nWrote stats to {stats_path}")
 
 
 if __name__ == "__main__":

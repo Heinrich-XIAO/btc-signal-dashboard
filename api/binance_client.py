@@ -7,11 +7,13 @@ from typing import Optional
 SPOT_BASE = "https://api.binance.com/api/v3"
 FUTURES_BASE = "https://fapi.binance.com/fapi/v1"
 
+PROXIES = {"http": "socks5h://5.255.103.55:1080", "https": "socks5h://5.255.103.55:1080"}
+
 def fetch_klines(symbol="BTCUSDT", interval="5m", limit=200) -> Optional[pd.DataFrame]:
     """Fetch recent klines from Binance spot."""
     params = {"symbol": symbol, "interval": interval, "limit": limit}
     try:
-        resp = requests.get(f"{SPOT_BASE}/klines", params=params, timeout=30)
+        resp = requests.get(f"{SPOT_BASE}/klines", params=params, timeout=30, proxies=PROXIES)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
@@ -43,7 +45,7 @@ def fetch_funding_rates(symbol="BTCUSDT", limit=50) -> Optional[pd.DataFrame]:
     """Fetch recent funding rates from Binance futures."""
     params = {"symbol": symbol, "limit": limit}
     try:
-        resp = requests.get(f"{FUTURES_BASE}/fundingRate", params=params, timeout=30)
+        resp = requests.get(f"{FUTURES_BASE}/fundingRate", params=params, timeout=30, proxies=PROXIES)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
